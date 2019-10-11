@@ -90,6 +90,9 @@ def get_constraint(bits, obj):
     if 'activation' in obj:
         lower = 0
         upper = 2 ** bits
+    elif 'swish' in obj:
+        lower = -1
+        upper = 2 ** bits - 1
     else:
         lower = -2 ** (bits - 1) + 1
         upper = 2 ** (bits - 1)
