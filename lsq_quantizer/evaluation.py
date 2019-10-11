@@ -36,39 +36,35 @@ def main():
     add_lsqmodule(net, bit_width=args.weight_bits)
 
     if args.cem:
-        ##### CEM vector for 1.5x_W7A7_CEM
-        cem_input = [7, 7, 7, 7, 7, 5, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 7, 7,
-                     6, 7, 6, 7, 7, 7, 7, 6, 7, 7, 7, 7, 6, 7, 7, 7, 7, 4,
-                     7, 6, 7, 5, 7, 7, 7, 7, 7, 5, 7, 7, 7, 5, 5, 7, 7, 7,
-                     5, 6, 7, 7, 7, 6, 4, 7, 7, 6, 5, 4, 7, 6, 5, 5, 4, 7,
-                     7, 6, 5, 4, 7, 7, 6, 5, 5, 3]
+        strategy = {"block3.layer.0.conv2": 3,
+                    "block3.layer.2.conv1": 3,
+                    "block3.layer.3.conv1": 3,
+                    "block3.layer.4.conv1": 3,
+                    "block3.layer.2.conv2": 3,
+                    "block3.layer.1.conv2": 3,
+                    "block3.layer.3.conv2": 3,
+                    "block3.layer.1.conv1": 3,
+                    "block3.layer.5.conv1": 2,
+                    "block1.layer.1.conv2": 1}
+        act_strategy = {"block3.layer.0.relu2": 3,
+                        "block3.layer.2.relu1": 3,
+                        "block3.layer.3.relu1": 3,
+                        "block3.layer.4.relu1": 3,
+                        "block3.layer.2.relu2": 3,
+                        "block3.layer.1.relu2": 3,
+                        "block3.layer.3.relu2": 3,
+                        "block3.layer.1.relu1": 3,
+                        "block3.layer.5.relu1": 2,
+                        "block1.layer.1.relu2": 1}
 
-        strategy_path = "lsq_quantizer/cem_strategy_relaxed.txt"
-        with open(strategy_path) as fp:
-            strategy = fp.readlines()
-        strategy = [x.strip().split(",") for x in strategy]
-
-        strat = {}
-        act_strat = {}
-        for idx, width in enumerate(cem_input):
-            weight_layer_name = strategy[idx][1]
-            act_layer_name = strategy[idx][0]
-            for name, module in net.named_modules():
-                if name.startswith('module'):
-                    name = name[7:]  # remove `module.`
-                if name==weight_layer_name:
-                    strat[name] = int(cem_input[idx])
-                if name==act_layer_name:
-                    act_strat[name] = int(cem_input[idx])
-
-        add_lsqmodule(net, bit_width=args.weight_bits, strategy=strat)
+        add_lsqmodule(net, bit_width=args.weight_bits, strategy=strategy)
 
         for name, module in net.named_modules():
-            if name in act_strat:
+            if name in act_strategy:
                 if "_in_act_quant" in name or "first_act" in name or "_head_act_quant0" in name or "_head_act_quant1" in name:
-                    temp_constr_act = get_constraint(act_strat[name], 'weight') #symmetric
+                    temp_constr_act = get_constraint(act_strategy[name], 'weight') #symmetric
                 else:
-                    temp_constr_act = get_constraint(act_strat[name], 'activation') #asymmetric
+                    temp_constr_act = get_constraint(act_strategy[name], 'activation') #asymmetric
                 module.constraint = temp_constr_act
 
     name_weights_old = torch.load(args.model_path)
