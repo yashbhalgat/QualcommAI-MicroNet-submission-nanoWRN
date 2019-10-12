@@ -84,5 +84,6 @@ def main():
     accuracy = quan_perf_epoch[1]
 
     print("Accuracy:", accuracy)
+    print("Score:", score)
 
 main()
