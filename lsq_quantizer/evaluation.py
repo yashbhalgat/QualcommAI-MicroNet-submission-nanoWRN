@@ -6,7 +6,7 @@ from utils.data_loader import dataloader_cifar100
 from helpers import load_checkpoint
 from utils.utilities import get_constraint, eval_performance
 from utils.add_lsqmodule import add_lsqmodule
-
+from micronet_score import get_micronet_score
 
 def get_arguments():
     parser = argparse.ArgumentParser(description='Evaluation')
@@ -74,6 +74,9 @@ def main():
 
     criterion = torch.nn.CrossEntropyLoss()
 
+    score = get_micronet_score(net, args.weight_bits, args.activation_bits, weight_strategy=strategy, activation_strategy=act_strategy,
+                           input_res=(3,32,32), baseline_params=36500000, baseline_MAC=10490000000)
+    
     # Calculate accuracy
     net = net.cuda()
 
